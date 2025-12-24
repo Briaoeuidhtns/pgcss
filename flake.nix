@@ -22,7 +22,10 @@
           nativeBuildInputs = with pkgs; [
             nodejs_22
             pnpm
+            biome
           ];
+
+          BIOME_BINARY = "${pkgs.biome}/bin/biome";
 
           shellHook = ''
             echo "🚀 Vite Monorepo Environment Loaded"

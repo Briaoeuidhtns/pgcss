@@ -1,9 +1,12 @@
 {
-  "name": "pgcss",
-  "version": "1.0.0",
-  "description": "",
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "packageManager": "pnpm@10.22.0"
+	"name": "pgcss",
+	"version": "1.0.0",
+	"description": "",
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"packageManager": "pnpm@10.22.0",
+	"dependencies": {
+		"biome": "^0.3.3"
+	}
 }

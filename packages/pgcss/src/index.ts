@@ -1,1 +1,1 @@
-export * from "./pgcss";
+export * from './pgcss'
