@@ -8,7 +8,7 @@ export interface PgCssConfig {
 }
 
 export interface StyleRow {
-	key: `${string}:${string}`
+	key: string
 	selector: string
 	property: string
 	value: string
@@ -101,7 +101,7 @@ const updateStyle = (sheet: CSSStyleSheet, change: Change<StyleRow>) => {
 }
 
 const removeStyle = (sheet: CSSStyleSheet, change: Change<StyleRow>) => {
-	const [selector, property] = change.key.split(':')
+	const { selector, property } = JSON.parse(change.key)
 	const rule = findCssRule(sheet, selector)
 	if (rule) {
 		rule.style.removeProperty(property)
@@ -135,7 +135,7 @@ export const subscribe = async (
 
 	const query = `
 		SELECT
-		s.name || ':' || d.property as key,
+		json_build_object('selector', s.name, 'property', d.property)::text as key,
 		s.name as selector,
 		d.property,
 		d.value,
