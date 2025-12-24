@@ -18,7 +18,7 @@ export interface StyleRow {
 /** A target for CSS output. Can be a stylesheet or an element that has one. */
 export type StyleTarget = CSSStyleSheet | HTMLStyleElement
 
-const DEFAULT_CONFIG: Required<PgCssConfig> = {
+export const DEFAULT_CONFIG: Required<PgCssConfig> = {
 	selectorsTable: 'selectors',
 	declarationsTable: 'declarations',
 }
