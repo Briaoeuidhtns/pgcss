@@ -74,7 +74,7 @@ describe('pgcss with real PGlite', () => {
         INSERT INTO declarations (selector_id, property, value) VALUES (1, 'color', 'red');
       `)
 
-			const unsubscribe = await subscribe(db, {}, styleElement)
+			await using _unsubscribe = await subscribe(db, {}, styleElement)
 
 			// Check initial styles
 			expect(sheet.cssRules.length).toBe(1)
@@ -88,11 +88,9 @@ describe('pgcss with real PGlite', () => {
 			)
 
 			// Allow time for live query to fire
-			await new Promise((resolve) => setTimeout(resolve, 200))
-
-			expect(rule.style.getPropertyValue('background')).toBe('blue')
-
-			await unsubscribe()
+			await vi.waitFor(() => {
+				expect(rule.style.getPropertyValue('background')).toBe('blue')
+			})
 		}, 10000)
 
 		it('should handle deletions', async () => {
@@ -102,7 +100,7 @@ describe('pgcss with real PGlite', () => {
         INSERT INTO declarations (selector_id, property, value) VALUES (1, 'color', 'red');
       `)
 
-			const unsubscribe = await subscribe(db, {}, styleElement)
+			await using _unsubscribe = await subscribe(db, {}, styleElement)
 
 			// Initial state
 			expect(sheet.cssRules.length).toBe(1)
@@ -113,13 +111,12 @@ describe('pgcss with real PGlite', () => {
 			await db.exec(`DELETE FROM declarations WHERE property = 'color';`)
 
 			// Allow time for live query to fire
-			await new Promise((resolve) => setTimeout(resolve, 200))
-
-			// Since the rule is now empty, it should be deleted
-			expect(sheet.cssRules.length).toBe(0)
-
-			await unsubscribe()
+			await vi.waitFor(() => {
+				// Since the rule is now empty, it should be deleted
+				expect(sheet.cssRules.length).toBe(0)
+			})
 		}, 10000)
+
 		it('should handle deletions with pseudo-selectors', async () => {
 			await initSchema(db)
 			await db.exec(`
@@ -127,7 +124,7 @@ describe('pgcss with real PGlite', () => {
         INSERT INTO declarations (selector_id, property, value) VALUES (1, 'color', 'blue');
       `)
 
-			const unsubscribe = await subscribe(db, {}, styleElement)
+			await using _unsubscribe = await subscribe(db, {}, styleElement)
 
 			// Initial state
 			expect(sheet.cssRules.length).toBe(1)
@@ -143,7 +140,31 @@ describe('pgcss with real PGlite', () => {
 				// Since the rule is now empty, it should be deleted
 				expect(sheet.cssRules.length).toBe(0)
 			})
-			await unsubscribe()
+		}, 10000)
+
+		it('should handle deletions with pseudo-selectors', async () => {
+			await initSchema(db)
+			await db.exec(`
+        INSERT INTO selectors (name) VALUES ('a:hover');
+        INSERT INTO declarations (selector_id, property, value) VALUES (1, 'color', 'blue');
+      `)
+
+			await using _unsubscribe = await subscribe(db, {}, styleElement)
+
+			// Initial state
+			expect(sheet.cssRules.length).toBe(1)
+			const rule = sheet.cssRules[0] as CSSStyleRule
+			expect(rule.selectorText).toBe('a:hover')
+			expect(rule.style.getPropertyValue('color')).toBe('blue')
+
+			// Delete the declaration
+			await db.exec(`DELETE FROM declarations WHERE property = 'color';`)
+
+			// Allow time for live query to fire
+			await vi.waitFor(() => {
+				// Since the rule is now empty, it should be deleted
+				expect(sheet.cssRules.length).toBe(0)
+			})
 		}, 10000)
 	})
 })

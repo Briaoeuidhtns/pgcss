@@ -116,6 +116,11 @@ const removeStyle = (sheet: CSSStyleSheet, change: Change<StyleRow>) => {
 	}
 }
 
+export interface DisposableUnsub {
+	(): Promise<void>
+	[Symbol.asyncDispose]: () => Promise<void>
+}
+
 /**
  * Subscribes to style changes via PGlite Live Queries and updates a <style> tag in the DOM.
  * @param db - The PGlite instance (must have 'live' extension enabled).
@@ -127,7 +132,7 @@ export const subscribe = async (
 	db: PGliteWithLive,
 	config: PgCssConfig = {},
 	target: StyleTarget,
-): Promise<() => Promise<void>> => {
+): Promise<DisposableUnsub> => {
 	const finalConfig = { ...DEFAULT_CONFIG, ...config }
 	const tblSelectors = checkTableName(finalConfig.selectorsTable)
 	const tblDeclarations = checkTableName(finalConfig.declarationsTable)
@@ -165,7 +170,7 @@ export const subscribe = async (
 		)
 	}
 
-	const { unsubscribe, initialChanges } = await db.live.changes<StyleRow>(
+	const { unsubscribe } = await db.live.changes<StyleRow>(
 		query,
 		[],
 		'key',
@@ -183,6 +188,8 @@ export const subscribe = async (
 			}
 		},
 	)
+	const unsubDispose = unsubscribe as DisposableUnsub
+	if ('asyncDispose' in Symbol) unsubDispose[Symbol.asyncDispose] = unsubscribe
 
-	return unsubscribe
+	return unsubDispose
 }
